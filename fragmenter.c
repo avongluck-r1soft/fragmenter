@@ -22,6 +22,9 @@
 #include <linux/limits.h>
 
 
+#define DISKSAFES 10
+
+
 static void
 get_urand(char* target, int bytes)
 {
@@ -61,7 +64,7 @@ gen_random_ascii(char *s, const int len)
 static void
 create_file(char* location, size_t size)
 {
-	printf("Create %s = %ld\n", location, size);
+	printf("Seed      %s = %ld\n", location, size);
 	size_t pos = 0;
 	int fh = open(location, O_WRONLY | O_CREAT, S_IRWXU);
 	while (pos < size) {
@@ -81,7 +84,7 @@ create_file(char* location, size_t size)
 static void
 grow_file(char* location, size_t size)
 {
-	printf("Grow   %s + %ld\n", location, size);
+	printf("Replicate %s + %ld\n", location, size);
 	size_t pos=0;
 	int fh = open(location, O_WRONLY | O_APPEND, S_IRWXU);
 	while (pos < size) {
@@ -146,7 +149,8 @@ unlink_randoms(char* location, int count)
 
 	if ((dir = opendir(location)) != NULL) {
 		int unlinked = 0;
-		while (((ent = readdir (dir)) != NULL) && unlinked < count) {
+		while (((ent = readdir (dir)) != NULL)
+			&& (unlinked < count || unlinked == -1)) {
 			if (strcmp(ent->d_name, ".") == 0
 				|| strcmp(ent->d_name, "..") == 0
 				|| strcmp(ent->d_name, "fragmented") == 0)
@@ -180,22 +184,14 @@ main(int argc, char* argv[])
 		return 1;
 	}
 
-	// Create fragmented file
-	char fragmented[PATH_MAX];
-	snprintf(fragmented, PATH_MAX, "%s/fragmented", argv[1]);
+	// Create "seeds" - < 2GiB
+	create_randoms(argv[1], DISKSAFES, 2147483647);
 
-	create_file(fragmented, 1050000000);
-
-	int loops = 0;
-	while (loops < 100) {
-		// Create "small ones"
-		create_randoms(argv[1], 2, 5240000);
-		// Grow fragmented one
-		grow_file(fragmented, rand() % 105000000);
-		// Grow random files
-		grow_randoms(argv[1], rand() % 5, 10500000);
-
-		loops++;
+	int replications = 0;
+	while (replications < 10000) {
+		// Grow random "disk safes" by < 1 MiB
+		grow_randoms(argv[1], rand() % DISKSAFES, 1050000);
+		replications++;
 	}
 
 	return 0;
