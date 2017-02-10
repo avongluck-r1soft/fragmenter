@@ -2,6 +2,8 @@
  * Fragmenter - Artificial filesystem fragmentation tool
  * Copyright, 2016-2017 Continuum, LLC.
  *
+ * Released under the terms of the MIT license
+ *
  * Authors:
  *   Alexander von Gluck IV <Alex.vongluck@r1soft.com>
  */
@@ -185,7 +187,7 @@ main(int argc, char* argv[])
 	create_file(fragmented, 1050000000);
 
 	int loops = 0;
-	while (loops < 50) {
+	while (loops < 100) {
 		// Create "small ones"
 		create_randoms(argv[1], 2, 5240000);
 		// Grow fragmented one
